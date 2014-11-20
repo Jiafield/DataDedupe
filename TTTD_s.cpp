@@ -19,18 +19,18 @@ private:
   int length;
 public:
   /* Constructor */
-  Chunk(char *data, long long unsigned fp, int len) {
+  Chunk(char *data, FingerprintType fp, int len) {
     dataPtr = (char *)malloc(len * sizeof(char));
     strncpy(dataPtr, data, len);
     fingerprint = fp;
     length = len;
   }
 
-  /* method: getChunkID
+  /* method: getChunkData
      Usage: external representation of the data stream
      return: the dataPtr and the length of the data as a tuple
    */
-  tuple<char *, int> getChunkID() {
+  tuple<char *, int> getChunkData() {
     return tuple<char *, int>(dataPtr, length);
   }
 
@@ -61,14 +61,46 @@ private:
   int Tmax;
   int primaryD;
   int secondaryD;
-  int remainder;
   int stepSize;
   int switchP;
+  bool switchStatus;  // true means switched
 
 public:
   // Constructor
-  TTTDsChunker(int mini, int maxi, int pD, int sD, int r, int step, int swP) {
-    
+  TTTDsChunker(int mini, int maxi, int pD, int sD, int step, int swP) {
+    Tmin = mini;
+    Tmax = maxi;
+    primaryD = pD;
+    secondaryD = sD;
+    stepSize = step;
+    switchP = swP;
+    switchStatus = false;
+
+    // check step size must be a divisor of (Tmax - Tmin)
+    if ((Tmax - Tmin) % stepSize) {
+      cout << "The step size must be a divisor of (Tmax - Tmin)" << endl;
+      exit(EXIT_FAILURE);
+    }
+
+    // Because of the TTTD-s algorithm need to switch the divisor to its half sometimes, check the primaryD and secondaryD must be a multiple of 2
+    if (primaryD % 2 || secondaryD % 2) {
+      cout << "The primaryD and secondaryD must be a multiple of 2" << endl;
+      exit(EXIT_FAILURE);
+    }
+  }
+
+  void switchDivisor() {
+    primaryD = primaryD / 2;
+    secondaryD = secondaryD / 2;
+    switchStatus = true;
+  }
+
+  void resetDivisor() {
+    if (switchStatus) {
+      primaryD = primaryD * 2;
+      secondaryD = secondaryD * 2;
+      switchStatus = false;
+    }
   }
 
   /* method: create chunks
@@ -76,8 +108,69 @@ public:
      output: a vector of chunks, each chunk is represented as a tuple of data pointer and length
      algorithm: TTTD-s
    */
-  vector<tuple<char *, int>> createChunks(istream input) {
-    return NULL;
+  vector<Chunk *> createChunks(istream input) {
+    int curLength = 0;
+    int backupBreak = 0;
+
+    char *buffer = (char *)malloc(Tmax * sizeof(char));
+    char *swapBuffer = (char *)malloc(Tmax * sizeof(char));
+
+    FingerprintType fingerprint;
+    FingerprintType backupFingerprint;
+
+    vector<Chunk *> chunks;
+
+    while (!input.eof()){
+      // Get the input
+      if (curLength == 0) {
+	input.read(buffer, Tmin);
+      } else {
+	input.read(buffer + curLength, stepSize);
+	curLength += stepSize;
+      }
+      // Update fingerprint
+      fingerprint = generateFingerprint(buffer, curLength);
+
+      // Switch divisor after the switch point
+      if (curLength > switchP) {
+	switchDivisor();
+      }
+      // See if we have a backupBreak
+      if (fingerprint % secondaryD == static_cast<unsigned int>(secondaryD -1)) {
+	backupBreak = curLength;
+	backupFingerprint = fingerprint;
+      }
+      // See if we have a break point
+      if (fingerprint % primaryD == static_cast<unsigned int>(primaryD - 1)) {
+	chunks.push_back(new Chunk(buffer, fingerprint, curLength));
+	backupBreak = 0;
+	curLength = 0;
+	resetDivisor();
+	continue;
+      }
+      // If reach the max length limit
+      if (curLength >= Tmax) {
+	if (backupBreak != 0) {
+	  // If there is a backup point
+	  chunks.push_back(new Chunk(buffer, backupFingerprint, backupBreak));
+	  // Put the data after the backup break point to swapBuffer
+	  strncpy(swapBuffer, buffer + backupBreak, Tmax - backupBreak);
+	  char *temp = swapBuffer;
+	  swapBuffer = buffer;
+	  buffer = temp;
+	  resetDivisor();
+	  curLength = Tmax - backupBreak;
+	  backupBreak = 0;
+	} else {
+	  // If no backup point, use max length
+	  chunks.push_back(new Chunk(buffer, fingerprint, Tmax));
+	  backupBreak = 0;
+	  curLength = 0;
+	  resetDivisor();  
+	}
+      } 
+    }
+    return chunks;
   }
 
   // Destructor

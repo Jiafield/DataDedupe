@@ -1,6 +1,7 @@
 #ifndef utilities
 #define utilities
 
-long long unsigned generateFingerprint(char *, int len);
+typedef unsigned long long FingerprintType;
+FingerprintType generateFingerprint(char *, int len);
 
 #endif
