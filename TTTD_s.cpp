@@ -76,12 +76,6 @@ public:
     switchP = swP;
     switchStatus = false;
 
-    // check step size must be a divisor of (Tmax - Tmin)
-    if ((Tmax - Tmin) % stepSize) {
-      cout << "The step size must be a divisor of (Tmax - Tmin)" << endl;
-      exit(EXIT_FAILURE);
-    }
-
     // Because of the TTTD-s algorithm need to switch the divisor to its half sometimes, check the primaryD and secondaryD must be a multiple of 2
     if (primaryD % 2 || secondaryD % 2) {
       cout << "The primaryD and secondaryD must be a multiple of 2" << endl;
@@ -164,15 +158,15 @@ public:
 	  curLength = Tmax - backupBreak;
 	  backupBreak = 0;
 	} else {
-	  // If no backup point, use max length
-	  chunks.push_back(new Chunk(buffer, fingerprint, Tmax));
+	  // If no backup point, use current length
+	  chunks.push_back(new Chunk(buffer, fingerprint, curLength));
 	  backupBreak = 0;
 	  curLength = 0;
 	  resetDivisor();  
 	}
       } 
     }
-    // If the last chunk before eof in buffer dose not meet all the break creteria, still need to add to the chunks' list
+    // If the last chunk before eof in buffer dose not meet all the break creterias, still need to add to the chunks' list
     if (curLength) {
       chunks.push_back(new Chunk(buffer, fingerprint, curLength));
     }
