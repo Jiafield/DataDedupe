@@ -126,16 +126,18 @@ public:
 	input.read(buffer, Tmin);
       } else {
 	input.read(buffer + curLength, stepSize);
-	curLength += stepSize;
       }
+      curLength += input.gcount();
+
       // Update fingerprint
       fingerprint = generateFingerprint(buffer, curLength);
 
-      // Switch divisor after the switch point
+      // if reach the switch paramter, switch divisor
       if (curLength > switchP) {
-	switchDivisor();
+	if (!switchStatus)
+	  switchDivisor();
       }
-      // See if we have a backupBreak
+      // See if we have a backup break point
       if (fingerprint % secondaryD == static_cast<unsigned int>(secondaryD -1)) {
 	backupBreak = curLength;
 	backupFingerprint = fingerprint;
@@ -169,6 +171,10 @@ public:
 	  resetDivisor();  
 	}
       } 
+    }
+    // If the last chunk before eof in buffer dose not meet all the break creteria, still need to add to the chunks' list
+    if (curLength) {
+      chunks.push_back(new Chunk(buffer, fingerprint, curLength));
     }
     return chunks;
   }
