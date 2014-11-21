@@ -36,11 +36,12 @@ public:
 
   /* Overload == operator 
      Usage: compare if two chunks are same
-     Precondition: the fingerprints are already the same
      return true or false
    */
   bool operator==(Chunk &c) {
-    if (c.length != length)
+    if (length != c.length)
+      return false;
+    if (fingerprint != c.fingerprint)
       return false;
     for (int i = 0; i < length; i++) {
       if ((c.dataPtr)[i] != dataPtr[i])
@@ -174,5 +175,5 @@ public:
   }
 
   // Destructor
-  ~TTTDsChunker();
+  ~TTTDsChunker() {}
 };
