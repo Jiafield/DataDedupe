@@ -150,7 +150,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
     // See if we have a break point
     if (isBreakPoint(fingerprint)) {
       chunks->push_back(new Chunk(buffer, fingerprint, curLength));
-      cout << "PRIMARY" << curLength << endl;
+      cout << "PRIMARY " << curLength << endl;
       backupBreak = 0;
       curLength = 0;
       resetDivisor();
@@ -161,7 +161,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
       if (backupBreak != 0) {
 	// If there is a backup point
 	chunks->push_back(new Chunk(buffer, backupFingerprint, backupBreak));
-	cout << "Secondary" << backupBreak << endl;
+	cout << "Secondary " << backupBreak << endl;
 	// Put the data after the backup break point to swapBuffer
 	strncpy(swapBuffer, buffer + backupBreak, Tmax - backupBreak);
 	char *temp = swapBuffer;
@@ -180,10 +180,10 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
       }
     } 
   }
-  // If the last chunk before eof in buffer dose not meet any the break creteria, still need to add to the chunks' list
+  // If the last chunk before eof in buffer dose not meet any the break creteria, we still need to add it to the chunks' list
   if (curLength) {
     chunks->push_back(new Chunk(buffer, fingerprint, curLength));
-    cout << "Last Piece" << curLength << endl;
+    cout << "LastPiece " << curLength << endl;
   }
   return chunks;
 }
