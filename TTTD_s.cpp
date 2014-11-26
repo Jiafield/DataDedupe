@@ -124,7 +124,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
   string backupFingerprint;
   
   vector<Chunk *> *chunks = new vector<Chunk *>();
-  
+
   while (!input.eof()){
     // Get the input
     if (curLength == 0) {
@@ -173,7 +173,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
       } else {
 	// If no backup point, use current length
 	chunks->push_back(new Chunk(buffer, fingerprint, curLength));
-	//cout << "Max Size" << chunks->size() << endl;
+	cout << "MaxSize " << chunks->size() << endl;
 	backupBreak = 0;
 	curLength = 0;
 	resetDivisor();  
