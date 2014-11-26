@@ -15,11 +15,12 @@ using std::istream;
 class Chunk {
 private:
   char *dataPtr;  // In the simulation, dynamic allocate memory to store the chunk metadata
-  long long unsigned fingerprint;
+  string fingerprint;
   int length;
+
 public:
   /* Constructor */
-  Chunk(char *data, FingerprintType fp, int len);
+  Chunk(char *data, string fp, int len);
 
 
   /* method: getChunkData
@@ -48,6 +49,9 @@ private:
   int stepSize;
   int switchP;
   bool switchStatus;  // true means switched
+  // The result of finger print is 20 bytes, need a lookup table to avoid overflow during calculating the modulo result.
+  int primaryLookupTable[20];
+  int secondaryLookupTable[20];
 
 public:
   // Constructor
@@ -57,6 +61,9 @@ public:
 
   void resetDivisor();
 
+  bool isBreakPoint(string &fp);
+
+  bool isBackupPoint(string &fp);
 
   /* method: create chunks
      input: data stream

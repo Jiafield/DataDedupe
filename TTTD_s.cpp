@@ -2,6 +2,7 @@
 #include <tuple>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <vector>
 #include "Utilities.h"
 #include "TTTD_s.h"
@@ -12,10 +13,10 @@ using std::cout;
 using std::endl;
 using std::vector;
 using std::istream;
-
+using std::string;
 
 /* Constructor */
-Chunk::Chunk(char *data, FingerprintType fp, int len) {
+Chunk::Chunk(char *data, string fp, int len) {
   dataPtr = (char *)malloc(len * sizeof(char));
   strncpy(dataPtr, data, len);
   fingerprint = fp;
@@ -62,6 +63,14 @@ TTTDsChunker::TTTDsChunker(int mini, int maxi, int pD, int sD, int step, int swP
   switchP = swP;
   switchStatus = false;
   
+  // The result of finger print is 20 bytes, need a lookup table to avoid overflow during calculating the modulo result. The value stored in the lookup table[i] is (256^i) % divisor.
+  primaryLookupTable[0] = 1 % primaryD;
+  secondaryLookupTable[0] = 1 % secondaryD;  
+  for (int i = 1; i < 20; i++) {
+    primaryLookupTable[i] =  (primaryLookupTable[i - 1] * (256 % primaryD)) % primaryD;
+    secondaryLookupTable[i] = (secondaryLookupTable[i - 1] * (256 % secondaryD)) % secondaryD;
+  }
+
   // Because of the TTTD-s algorithm need to switch the divisor to its half sometimes, check the primaryD and secondaryD must be a multiple of 2
   if (primaryD % 2 || secondaryD % 2) {
     cout << "The primary divisor and secondary divisor must be a multiple of 2" << endl;
@@ -83,6 +92,22 @@ void TTTDsChunker::resetDivisor() {
   }
 }
 
+bool TTTDsChunker::isBreakPoint(string &fp) {
+  int result = 0;
+  for (int i = 0; i < 20; i++) {
+    result += ((fp[i] % primaryD) * primaryLookupTable[i]) % primaryD;
+  }
+  return result % primaryD == primaryD - 1;
+}
+
+bool TTTDsChunker::isBackupPoint(string &fp) {
+  int result = 0;
+  for (int i = 0; i < 20; i++) {
+    result += ((fp[i] % secondaryD) * secondaryLookupTable[i]) % secondaryD;
+  }
+  return result % secondaryD == secondaryD - 1;
+}
+
 /* method: create chunks
    input: data stream
    output: a vector of chunks, each chunk is represented as a tuple of data pointer and length
@@ -95,8 +120,8 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
   char *buffer = (char *)malloc(Tmax * sizeof(char));
   char *swapBuffer = (char *)malloc(Tmax * sizeof(char));
   
-  FingerprintType fingerprint;
-  FingerprintType backupFingerprint;
+  string fingerprint;
+  string backupFingerprint;
   
   vector<Chunk *> *chunks = new vector<Chunk *>();
   
@@ -118,14 +143,14 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
 	switchDivisor();
     }
     // See if we have a backup break point
-    if (fingerprint % secondaryD == static_cast<unsigned int>(secondaryD -1)) {
+    if (isBackupPoint(fingerprint)) {
       backupBreak = curLength;
       backupFingerprint = fingerprint;
     }
     // See if we have a break point
-    if (fingerprint % primaryD == static_cast<unsigned int>(primaryD - 1)) {
+    if (isBreakPoint(fingerprint)) {
       chunks->push_back(new Chunk(buffer, fingerprint, curLength));
-      cout << "PRIMARY" << chunks->size() << endl;
+      cout << "PRIMARY" << curLength << endl;
       backupBreak = 0;
       curLength = 0;
       resetDivisor();
@@ -136,7 +161,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
       if (backupBreak != 0) {
 	// If there is a backup point
 	chunks->push_back(new Chunk(buffer, backupFingerprint, backupBreak));
-	cout << "Secondary" << chunks->size() << endl;
+	cout << "Secondary" << backupBreak << endl;
 	// Put the data after the backup break point to swapBuffer
 	strncpy(swapBuffer, buffer + backupBreak, Tmax - backupBreak);
 	char *temp = swapBuffer;
@@ -148,7 +173,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
       } else {
 	// If no backup point, use current length
 	chunks->push_back(new Chunk(buffer, fingerprint, curLength));
-	cout << "Max Size" << chunks->size() << endl;
+	//cout << "Max Size" << chunks->size() << endl;
 	backupBreak = 0;
 	curLength = 0;
 	resetDivisor();  
@@ -158,6 +183,7 @@ vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
   // If the last chunk before eof in buffer dose not meet any the break creteria, still need to add to the chunks' list
   if (curLength) {
     chunks->push_back(new Chunk(buffer, fingerprint, curLength));
+    cout << "Last Piece" << curLength << endl;
   }
   return chunks;
 }
