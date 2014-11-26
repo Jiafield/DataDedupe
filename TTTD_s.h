@@ -2,6 +2,7 @@
 #define TTTD_s
 
 #include <tuple>
+#include <iostream>
 #include <stdlib.h>
 #include <string.h>
 #include <vector>
@@ -62,7 +63,7 @@ public:
      output: a vector of chunks, each chunk is represented as a tuple of data pointer and length
      algorithm: TTTD-s
    */
-  vector<Chunk *> createChunks(istream input);
+  vector<Chunk *> *createChunks(istream &input);
 
   // Destructor
   ~TTTDsChunker();

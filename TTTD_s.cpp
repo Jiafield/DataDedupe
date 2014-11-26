@@ -88,7 +88,7 @@ void TTTDsChunker::resetDivisor() {
    output: a vector of chunks, each chunk is represented as a tuple of data pointer and length
    algorithm: TTTD-s
 */
-vector<Chunk *> TTTDsChunker::createChunks(istream input) {
+vector<Chunk *> *TTTDsChunker::createChunks(istream &input) {
   int curLength = 0;
   int backupBreak = 0;
   
@@ -98,7 +98,7 @@ vector<Chunk *> TTTDsChunker::createChunks(istream input) {
   FingerprintType fingerprint;
   FingerprintType backupFingerprint;
   
-  vector<Chunk *> chunks;
+  vector<Chunk *> *chunks = new vector<Chunk *>();
   
   while (!input.eof()){
     // Get the input
@@ -124,7 +124,8 @@ vector<Chunk *> TTTDsChunker::createChunks(istream input) {
     }
     // See if we have a break point
     if (fingerprint % primaryD == static_cast<unsigned int>(primaryD - 1)) {
-      chunks.push_back(new Chunk(buffer, fingerprint, curLength));
+      chunks->push_back(new Chunk(buffer, fingerprint, curLength));
+      cout << "PRIMARY" << chunks->size() << endl;
       backupBreak = 0;
       curLength = 0;
       resetDivisor();
@@ -134,7 +135,8 @@ vector<Chunk *> TTTDsChunker::createChunks(istream input) {
     if (curLength >= Tmax) {
       if (backupBreak != 0) {
 	// If there is a backup point
-	chunks.push_back(new Chunk(buffer, backupFingerprint, backupBreak));
+	chunks->push_back(new Chunk(buffer, backupFingerprint, backupBreak));
+	cout << "Secondary" << chunks->size() << endl;
 	// Put the data after the backup break point to swapBuffer
 	strncpy(swapBuffer, buffer + backupBreak, Tmax - backupBreak);
 	char *temp = swapBuffer;
@@ -145,20 +147,20 @@ vector<Chunk *> TTTDsChunker::createChunks(istream input) {
 	backupBreak = 0;
       } else {
 	// If no backup point, use current length
-	chunks.push_back(new Chunk(buffer, fingerprint, curLength));
+	chunks->push_back(new Chunk(buffer, fingerprint, curLength));
+	cout << "Max Size" << chunks->size() << endl;
 	backupBreak = 0;
 	curLength = 0;
 	resetDivisor();  
       }
     } 
   }
-  // If the last chunk before eof in buffer dose not meet all the break creterias, still need to add to the chunks' list
+  // If the last chunk before eof in buffer dose not meet any the break creteria, still need to add to the chunks' list
   if (curLength) {
-    chunks.push_back(new Chunk(buffer, fingerprint, curLength));
+    chunks->push_back(new Chunk(buffer, fingerprint, curLength));
   }
   return chunks;
 }
 
 // Destructor
 TTTDsChunker::~TTTDsChunker() {}
-
