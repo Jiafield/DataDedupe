@@ -20,7 +20,3 @@ string generateFingerprint(unsigned char *data, int len) {
   return string((const char*)fingerprint);
 }
 
-bool isBreakPoint(string s, int divisor) {
-  
-  return false;
-}
