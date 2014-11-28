@@ -1,4 +1,42 @@
 #include <stdlib.h>
+#include <time.h>
+#include <unordered_map>
+
+using std::unordered_map;
+
+class FreqChunk {
+private:
+  int ID;    // Store the chunk ID from the result of content defined chunking
+  int offset;  // Store the offset relative to the CDC chunk
+  char *data;  // The data pointer 
+  int length;  // The length of this small chunk
+
+public:
+  FreqChunk(int id, int off, char *ptr, int len) {
+    ID = id;
+    offset = off;
+    data = ptr;
+    length = len;
+  }
+
+  char *getData() {
+    return data;
+  }
+
+  int getLength() {
+    return length;
+  }
+  
+  bool operator==(FreqChunk &c) {
+    if (length != c.length)
+      return false;
+    for (int i = 0; i < length; i++) {
+      if (data[i] != (c.data)[i])
+	return false;
+    }
+    return true;
+  }
+};
 
 class BloomFilter {
 private:
@@ -12,11 +50,24 @@ public:
     : numHashes(3), masks({0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80})
   {
     // In the lookup table, each bit is an entry of 0 or 1. 
-    // Here the table size is 8 times of the number of element entries.
-    // The number of hash function default is 3, don't change it
+    // Here the table size is 8 times of the number of input element entries.
+    // The number of hash functions is default 3
     lookupTable = (unsigned char *)calloc(entries, sizeof(unsigned char));
     numEntries = 8 * entries;
   }
+
+  BloomFilter()
+    : numHashes(3), masks({0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80})
+  {
+    // Default number of entries is 10000
+    // In the lookup table, each bit is an entry of 0 or 1. 
+    // Here the table size is 8 times of the number of input element entries.
+    // The number of hash functions is default 3
+    unsigned long long int entries = 10000;
+    lookupTable = (unsigned char *)calloc(entries, sizeof(unsigned char));
+    numEntries = 8 * entries;
+  }
+
 
   unsigned long long int hash1(const void *data, int len) {
     return 0;
@@ -67,4 +118,30 @@ public:
   ~BloomFilter() {
     free(lookupTable);
   }
+};
+
+class FBCChunker {
+private:
+  BloomFilter filters[3];    // The number of bloom filters is default 3, according to the FBC paper, 3 works best in practice.
+  unordered_map<FreqChunk, int> countTable;
+
+public:
+  FBCChunker() {
+    srand(time(NULL));
+  }
+
+  bool lookupCandidate(FreqChunk &chunk) {
+    for (int i = 0; i < 3; i++) {
+      if (!filters[i].lookup(chunk.getData(), chunk.getLength()))
+	return false;
+    }
+    return true;
+  }
+
+  void insertCandidate(FreqChunk &chunk) {
+    int iFilter = rand() % 3;
+    filters[iFilter].insert(chunk.getData(), chunk.getLength());
+  }
+
+  
 };
