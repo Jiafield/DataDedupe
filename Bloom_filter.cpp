@@ -68,20 +68,36 @@ public:
     numEntries = 8 * entries;
   }
 
+  /* Algorithm : FNV hash
+     Reference: http://en.wikipedia.org/wiki/Fowler%E2%80%93Noll%E2%80%93Vo_hash_function*/
+  unsigned long long int hash1(const char *data, int len) {
+    unsigned long long int hash;
+    int i;
+    for(hash = i = 0; i < len; ++i)
+    {
+        hash += data[i];
+        hash += (hash << 10);
+        hash ^= (hash >> 6);
+    }
+    hash += (hash << 3);
+    hash ^= (hash >> 11);
+    hash += (hash << 15);
+    return hash;
+  }
 
-  unsigned long long int hash1(const void *data, int len) {
+  /* Algorithm : Jenkins hash
+     Reference: http://en.wikipedia.org/wiki/Jenkins_hash_function*/
+  unsigned long long int hash2(const char *data, int len) {
     return 0;
   }
 
-  unsigned long long int hash2(const void *data, int len) {
+  /* Algorithm : 
+     Reference: */
+  unsigned long long int hash3(const char *data, int len) {
     return 0;
   }
 
-  unsigned long long int hash3(const void *data, int len) {
-    return 0;
-  }
-
-  void insert(const void *data, int len) {
+  void insert(const char *data, int len) {
     unsigned long long int result[3];
     result[0] = hash1(data, len);
     result[1] = hash2(data, len);
@@ -93,7 +109,7 @@ public:
     }
   }
 
-  bool lookup(const void *data, int len) {
+  bool lookup(const char *data, int len) {
     unsigned long long int result;
     result = hash1(data, len);
     if (!lookup_one(result))
@@ -119,6 +135,7 @@ public:
     free(lookupTable);
   }
 };
+
 
 class FBCChunker {
 private:
