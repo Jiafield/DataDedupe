@@ -9,41 +9,8 @@
 using std::unordered_map;
 using std::string;
 using std::vector;
-/*
-class FreqChunk {
-private:
-  int ID;    // Store the chunk ID from the result of content defined chunking
-  int offset;  // Store the offset relative to the CDC chunk
-  char *data;  // The data pointer 
-  int length;  // The length of this small chunk
 
-public:
-  FreqChunk(int id, int off, char *ptr, int len) {
-    ID = id;
-    offset = off;
-    data = ptr;
-    length = len;
-  }
 
-  char *getData() {
-    return data;
-  }
-
-  int getLength() {
-    return length;
-  }
-  
-  bool operator==(FreqChunk &c) {
-    if (length != c.length)
-      return false;
-    for (int i = 0; i < length; i++) {
-      if (data[i] != (c.data)[i])
-	return false;
-    }
-    return true;
-  }
-};
-*/
 class BloomFilter {
 private:
   unsigned char *lookupTable;
@@ -202,6 +169,7 @@ private:
   int Tmax;
   int Tmin;
   int sampleRate;
+  int lookupTable[20];
 
 public:
   FBCChunker(int mx, int mn, int r) {
@@ -209,6 +177,18 @@ public:
     Tmax = mx;
     Tmin = mn;
     sampleRate = r;
+    lookupTable[0] = 1 % sampleRate;
+    for (int i = 1; i < 20; i++) {
+      lookupTable[i] =  (lookupTable[i - 1] * (256 % sampleRate)) % sampleRate;
+    }
+  }
+
+  bool prefilter(string fp) {
+    int result = 0;
+    for (int i = 0; i < 20; i++) {
+      result += ((fp[i] % sampleRate) * lookupTable[i]) % sampleRate;
+    }
+    return result % sampleRate == 1;
   }
 
   bool lookupCandidate(char *data, int length) {
@@ -224,10 +204,6 @@ public:
     filters[iFilter].insert(data, length);
   }
 
-  bool prefilter(string fp) {
-    return true;
-  }
-
   vector<Chunk *> *splitBigChunk(Chunk *c) {
     // Get the whole chunks data
     tuple<char *, int> d = c->getChunkData();
@@ -239,10 +215,10 @@ public:
     int curPos = 0;
     // Scan the big chunk with variable window size    
     while (windowSize >= Tmin) {
-      // Each time forward one step
+      // The window forward one byte each time
       for (curPos = 0; curPos < length - windowSize; curPos++) {
 	string fingerprint =  generateFingerprint((unsigned char *)(data + curPos), windowSize);
-	// If the small chunk can past the prefilter
+	// If the window chunk can past the prefilter
 	if (prefilter(fingerprint)) {
 	  // If the chunk can pass all the bloom filters
 	  if (lookupCandidate(data + curPos, windowSize)) {
@@ -263,7 +239,7 @@ public:
       // Each time half the window size
       windowSize = windowSize / 2;
     }
-  return Chunks;
+    return Chunks;
   }
 
 };
