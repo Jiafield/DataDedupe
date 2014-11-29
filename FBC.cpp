@@ -108,13 +108,12 @@ void FBCChunker::insertCandidate(char *data, int length) {
   filters[iFilter].insert(data, length);
 }
 
-vector<Chunk *> *FBCChunker::splitBigChunk(Chunk *c) {
+void FBCChunker::splitBigChunk(Chunk *c) {
   // Get the whole chunks data
   tuple<char *, int> d = c->getChunkData();
   char *data = std::get<0>(d);
   int length = std::get<1>(d);
   
-  vector<Chunk *> * Chunks = new vector<Chunk *>();
   int windowSize = Tmax;
   int curPos = 0;
   // Scan the big chunk with variable window size    
@@ -128,8 +127,9 @@ vector<Chunk *> *FBCChunker::splitBigChunk(Chunk *c) {
 	if (lookupCandidate(data + curPos, windowSize)) {
 	  Chunk c(data + curPos, fingerprint, windowSize);
 	  // If the chunk is already in frequency table
-	  if (freqTable.find(c) != freqTable.end()) {
-	    freqTable[c] += 1;
+	  auto position = freqTable.find(c);
+	  if (position != freqTable.end()) {
+	    position->second += 1;
 	  } else {
 	    // With 3 bloom filters, the expect number of occurence before a chunk add to all 3 bloom filter is 5.5. So the initial value for a chunk in frequent table is 6
 	    freqTable[c] = 6;
@@ -143,5 +143,4 @@ vector<Chunk *> *FBCChunker::splitBigChunk(Chunk *c) {
     // Each time half the window size
     windowSize = windowSize / 2;
   }
-  return Chunks;
 }
