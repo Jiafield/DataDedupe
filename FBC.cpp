@@ -201,12 +201,14 @@ private:
   unordered_map<Chunk, int> freqTable;
   int Tmax;
   int Tmin;
+  int sampleRate;
 
 public:
-  FBCChunker(int mx, int mn) {
+  FBCChunker(int mx, int mn, int r) {
     srand(time(NULL));
     Tmax = mx;
     Tmin = mn;
+    sampleRate = r;
   }
 
   bool lookupCandidate(char *data, int length) {
@@ -223,7 +225,7 @@ public:
   }
 
   bool prefilter(string fp) {
-    return ;
+    return true;
   }
 
   vector<Chunk *> *splitBigChunk(Chunk *c) {
@@ -236,7 +238,7 @@ public:
     int windowSize = Tmax;
     int curPos = 0;
     // Scan the big chunk with variable window size    
-    while (windowSize > Tmin) {
+    while (windowSize >= Tmin) {
       // Each time forward one step
       for (curPos = 0; curPos < length - windowSize; curPos++) {
 	string fingerprint =  generateFingerprint((unsigned char *)(data + curPos), windowSize);
