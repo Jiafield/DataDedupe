@@ -35,11 +35,14 @@ tuple<char *, int> Chunk::getChunkData() {
    Usage: compare if two chunks are same
    return true or false
 */
-bool Chunk::operator==(Chunk &c) {
+bool Chunk::operator==(const Chunk c) const {
+  cout << "called ==" << endl;
   if (length != c.length)
     return false;
+  
   if (fingerprint != c.fingerprint)
     return false;
+  
   for (int i = 0; i < length; i++) {
     if ((c.dataPtr)[i] != dataPtr[i])
       return false;
@@ -92,6 +95,8 @@ void TTTDsChunker::resetDivisor() {
   }
 }
 
+/* Method: isBreakPoint
+   Algorithm: change the fingerprint to integer and see if fingerprint % divisor meet the break point rule*/
 bool TTTDsChunker::isBreakPoint(string &fp) {
   int result = 0;
   for (int i = 0; i < 20; i++) {

@@ -34,7 +34,7 @@ public:
      Usage: compare if two chunks are same
      return true or false
    */
-  bool operator==(Chunk &c);
+  bool operator==(const Chunk c) const;
 
   /* Destructor */
   ~Chunk();
