@@ -108,9 +108,9 @@ void FBCChunker::insertCandidate(char *data, int length) {
   filters[iFilter].insert(data, length);
 }
 
-void FBCChunker::splitBigChunk(Chunk *c) {
+void FBCChunker::splitBigChunk(Chunk &c) {
   // Get the whole chunks data
-  tuple<char *, int> d = c->getChunkData();
+  tuple<char *, int> d = c.getChunkData();
   char *data = std::get<0>(d);
   int length = std::get<1>(d);
   

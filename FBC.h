@@ -58,7 +58,7 @@ public:
   // Random choose a bloom filter and add the chunk candidate to the filter
   void insertCandidate(char *data, int length);
 
-  void splitBigChunk(Chunk *c);
+  void splitBigChunk(Chunk &c);
 
   void printFreqTable();
 };
