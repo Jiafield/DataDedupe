@@ -60,5 +60,6 @@ public:
 
   void splitBigChunk(Chunk *c);
 
+  void printFreqTable();
 };
 #endif

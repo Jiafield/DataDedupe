@@ -144,3 +144,8 @@ void FBCChunker::splitBigChunk(Chunk *c) {
     windowSize = windowSize / 2;
   }
 }
+
+void FBCChunker::printFreqTable() {
+  for ( auto it = freqTable.begin(); it != freqTable.end(); ++it )
+    std::cout << it->second << std::endl;
+}
