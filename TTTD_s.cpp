@@ -27,7 +27,7 @@ Chunk::Chunk(char *data, string fp, int len) {
    Usage: external representation of the data stream
    return: the dataPtr and the length of the data as a tuple
 */
-tuple<char *, int> Chunk::getChunkData() {
+tuple<char *, int> Chunk::getChunkData() const {
   return tuple<char *, int>(dataPtr, length);
 }
 
@@ -35,7 +35,7 @@ tuple<char *, int> Chunk::getChunkData() {
    Usage: compare if two chunks are same
    return true or false
 */
-bool Chunk::operator==(const Chunk c) const {
+bool Chunk::operator==(const Chunk &c) const {
   cout << "called ==" << endl;
   if (length != c.length)
     return false;
@@ -54,7 +54,6 @@ bool Chunk::operator==(const Chunk c) const {
 Chunk:: ~Chunk() {
   free(dataPtr);
 }
-
 
 // Constructor
 TTTDsChunker::TTTDsChunker(int mini, int maxi, int pD, int sD, int step, int swP) {

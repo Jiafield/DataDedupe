@@ -5,12 +5,14 @@
 #include <iostream>
 #include <stdlib.h>
 #include <string.h>
+#include <string>
 #include <vector>
 #include "Utilities.h"
 
 using std::tuple;
 using std::vector;
 using std::istream;
+using std::string;
 
 class Chunk {
 private:
@@ -27,17 +29,32 @@ public:
      Usage: external representation of the data stream
      return: the dataPtr and the length of the data as a tuple
    */
-  tuple<char *, int> getChunkData();
+  tuple<char *, int> getChunkData() const;
 
 
   /* Overload == operator 
      Usage: compare if two chunks are same
      return true or false
    */
-  bool operator==(const Chunk c) const;
+  bool operator==(const Chunk &c) const;
 
   /* Destructor */
   ~Chunk();
+};
+
+template <class T>
+class ChunkHash;
+
+template<>
+class ChunkHash<Chunk>
+{
+public:
+  std::size_t operator()(Chunk const& c) const {
+    tuple<char *, int> d = c.getChunkData();
+    char *data = std::get<0>(d);
+    int length = std::get<1>(d);
+    return hash3(data, length);
+  }
 };
 
 class TTTDsChunker {

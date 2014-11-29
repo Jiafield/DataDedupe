@@ -8,6 +8,8 @@ using std::cout;
 using std::endl;
 
 int main(int argc, char *argv[]) {
+
+  // Test TTTDs
   std::filebuf fb;
   if (fb.open(argv[1], std::ios::in))
   {
@@ -24,5 +26,8 @@ int main(int argc, char *argv[]) {
     cout << "Can not open input stream" << endl;
     exit(EXIT_FAILURE);
   }
+
+  // Test bloom filter
+  
   return 0;
 }
