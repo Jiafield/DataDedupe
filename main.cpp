@@ -1,5 +1,6 @@
 #include "Utilities.h"
 #include "TTTD_s.h"
+#include "FBC.h"
 #include <iostream>
 #include <fstream>
 #include <stdlib.h>
@@ -28,6 +29,11 @@ int main(int argc, char *argv[]) {
   }
 
   // Test bloom filter
+  BloomFilter bf;  
+  cout << "Before insert: " << bf.lookup("hello", 6) << endl;
+  bf.insert("hello", 6);
+  cout << "After insert: " << bf.lookup("hello", 6) << endl;  
+
   
   return 0;
 }
